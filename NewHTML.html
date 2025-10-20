@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Voice Repeat and Verify</title>
+</head>
+<body>
+<h2>Repeat the Sentence</h2>
+<p id="sentence">The quick brown fox jumps over the lazy dog.</p>
+<button id="speakBtn">Speak Sentence</button>
+<button id="listenBtn">Repeat After Me</button>
+<div id="result"></div>
+<script>
+const sentenceEl = document.getElementById('sentence');
+const speakBtn = document.getElementById('speakBtn');
+const listenBtn = document.getElementById('listenBtn');
+const resultDiv = document.getElementById('result');
+
+// Function to speak the sentence
+function speakSentence() {
+  const utterance = new SpeechSynthesisUtterance(sentenceEl.textContent);
+  window.speechSynthesis.speak(utterance);
+}
+
+// Speech Recognition setup
+const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+recognition.continuous = false;
+recognition.interimResults = false;
+recognition.lang = 'en-US';
+
+recognition.onresult = function(event) {
+  const spokenText = event.results[0][0].transcript.trim();
+  const originalText = sentenceEl.textContent.trim();
+  if (spokenText.toLowerCase() === originalText.toLowerCase()) {
+    resultDiv.innerHTML = "<b>Match!</b> Your speech matches the sentence.";
+  } else {
+    resultDiv.innerHTML = "<b>No match.</b> You said: " + spokenText;
+  }
+};
+
+recognition.onerror = function(event) {
+  resultDiv.innerHTML = "Error recognizing speech: " + event.error;
+};
+
+// Event listeners
+speakBtn.onclick = speakSentence;
+listenBtn.onclick = () => {
+  recognition.start();
+};
+</script>
+</body>
+</html>
