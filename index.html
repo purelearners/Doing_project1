@@ -1,53 +1,76 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Voice Repeat and Verify</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Voice Repeat and Verify</title>
+  <style>
+    body { font-family: sans-serif; padding: 2rem; }
+    button { margin: 0.5rem 0.5rem 0 0; }
+    #result { margin-top: 1rem; font-size: 1.1rem; }
+  </style>
 </head>
 <body>
-<h2>Repeat the Sentence</h2>
-<p id="sentence">The quick brown fox jumps over the lazy dog.</p>
-<button id="speakBtn">Speak Sentence</button>
-<button id="listenBtn">Repeat After Me</button>
-<div id="result"></div>
-<script>
-const sentenceEl = document.getElementById('sentence');
-const speakBtn = document.getElementById('speakBtn');
-const listenBtn = document.getElementById('listenBtn');
-const resultDiv = document.getElementById('result');
+  <h2>Repeat the Sentence</h2>
+  <p id="sentence">The quick brown fox jumps over the lazy dog.</p>
+  <button id="speakBtn">Speak Sentence</button>
+  <button id="listenBtn">Repeat After Me</button>
+  <div id="result"></div>
 
-// Function to speak the sentence
-function speakSentence() {
-  const utterance = new SpeechSynthesisUtterance(sentenceEl.textContent);
-  window.speechSynthesis.speak(utterance);
-}
+  <script>
+    const sentenceEl = document.getElementById('sentence');
+    const speakBtn = document.getElementById('speakBtn');
+    const listenBtn = document.getElementById('listenBtn');
+    const resultDiv = document.getElementById('result');
 
-// Speech Recognition setup
-const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-recognition.continuous = false;
-recognition.interimResults = false;
-recognition.lang = 'en-US';
+    // Function to speak the sentence
+    function speakSentence() {
+      const utterance = new SpeechSynthesisUtterance(sentenceEl.textContent);
+      window.speechSynthesis.speak(utterance);
+    }
 
-recognition.onresult = function(event) {
-  const spokenText = event.results[0][0].transcript.trim();
-  const originalText = sentenceEl.textContent.trim();
-  if (spokenText.toLowerCase() === originalText.toLowerCase()) {
-    resultDiv.innerHTML = "<b>Match!</b> Your speech matches the sentence.";
-  } else {
-    resultDiv.innerHTML = "<b>No match.</b> You said: " + spokenText;
-  }
-};
+    // Utility to normalize a string: lowercase, strip punctuation, collapse spaces
+    function normalize(str) {
+      return str
+        .toLowerCase()
+        .replace(/[^\w\s]|_/g, "")    // remove punctuation
+        .replace(/\s+/g, " ")        // collapse multiple spaces
+        .trim();
+    }
 
-recognition.onerror = function(event) {
-  resultDiv.innerHTML = "Error recognizing speech: " + event.error;
-};
+    // Speech Recognition setup
+    const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.lang = 'en-US';
 
-// Event listeners
-speakBtn.onclick = speakSentence;
-listenBtn.onclick = () => {
-  recognition.start();
-};
-</script>
+    recognition.onresult = function(event) {
+      const spokenText = event.results[0][0].transcript;
+      const originalText = sentenceEl.textContent;
+
+      const normSpoken   = normalize(spokenText);
+      const normOriginal = normalize(originalText);
+
+      if (normSpoken === normOriginal) {
+        resultDiv.innerHTML = "<b>Match!</b> Your speech matches the sentence.";
+      } else {
+        resultDiv.innerHTML = 
+          "<b>No match.</b><br/>" +
+          "You said: \"" + spokenText + "\"<br/>" +
+          "Normalized: \"" + normSpoken + "\"";
+      }
+    };
+
+    recognition.onerror = function(event) {
+      resultDiv.innerHTML = "Error recognizing speech: " + event.error;
+    };
+
+    // Event listeners
+    speakBtn.onclick = speakSentence;
+    listenBtn.onclick = () => {
+      resultDiv.textContent = "Listening…";
+      recognition.start();
+    };
+  </script>
 </body>
 </html>
